@@ -1,0 +1,52 @@
+{% extends "base_hero.html" %}
+{% from "components/pagination.html" import pagination %}
+
+{% block title %}Lista de Encargados - Alquilando{% endblock %}
+
+{% block hero_content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='customCss/styles.css') }}">
+<div class="container-fluid px-0">
+    <div class="row justify-content-center">
+        <div class="col-12 px-0">
+            <h2 class="text-center mb-3">Lista de Encargados</h2>
+            
+            <!-- Lista de encargados -->
+            {% for encargado in encargados.items %}
+                <div class="card mb-3 rounded-0">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-2">
+                                <h5 class="card-title">{{ encargado.nombre }} {{ encargado.apellido }}</h5>
+                            </div>
+                            <div class="col-md-3">
+                                <p class="card-text"><strong>Email:</strong> {{ encargado.email }}</p>
+                            </div>
+                            <div class="col-md-2">
+                                <p class="card-text"><strong>Teléfono:</strong> {{ encargado.telefono }}</p>
+                            </div>
+                            <div class="col-md-2">
+                                <p class="card-text"><strong>DNI:</strong> {{ encargado.dni }}</p>
+                            </div>
+                            {% if session.rol in ['administrador', 'superusuario'] %}
+                            <div class="col-md-3 text-end">
+                                <div class="d-flex justify-content-end gap-1 flex-wrap">
+                                    <form method="POST" action="{{ url_for('main.eliminar_encargado', id=encargado.id) }}" style="display:inline;">
+                                        <button type="button" class="btn btn-danger btn-sm w-auto px-2" onclick="mostrarConfirmacion(this, '¿Seguro quiere eliminar este encargado?')">Eliminar</button>
+                                    </form>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="text-center">
+                    <p class="lead">No hay encargados registrados.</p>
+                </div>
+            {% endfor %}
+            
+            {{ pagination(encargados, 'main.ver_encargados') }}
+        </div>
+    </div>
+</div>
+{% endblock %} 

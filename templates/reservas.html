@@ -1,0 +1,176 @@
+{% extends "base_hero.html" %}
+
+{% block title %}Mis Reservas - Alquilando{% endblock %}
+
+{% block hero_content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <!-- Botones de filtro -->
+            <div class="d-flex justify-content-center mb-3">
+                <a href="/reservas/futuras" class="btn btn-outline-primary mx-2">Reservas Futuras</a>
+                <a href="/reservas/activas" class="btn btn-outline-primary mx-2">Reservas Activas</a>
+                <a href="/reservas/concluidas" class="btn btn-outline-primary mx-2">Reservas Concluidas</a>
+                <a href="/reservas/canceladas" class="btn btn-outline-primary mx-2">Reservas Canceladas</a>
+                <a href="/reservas/pendientes" class="btn btn-outline-primary mx-2">Calificaciones Pendientes</a>
+                <a href="/reservas/editables" class="btn btn-outline-primary mx-2">Calificaciones editables/eliminables</a>
+                <a href="/mis-pagos" class="btn btn-outline-primary mx-2">Mis Pagos</a>
+            </div>
+            <h2 class="mb-4 text-center">Mi Historial de Reservas</h2>
+            <div class="row g-3">
+                {% if reservas and reservas|length > 0 %}
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Propiedad</th>
+                                <th>Dirección</th>
+                                <th>Fecha Inicio</th>
+                                <th>Fecha Fin</th>
+                                <th>Cantidad de Personas</th>
+                                {% if not ocultar_acciones %}
+                                    {% set mostrar_acciones = reservas|selectattr('fecha_inicio', 'le', current_date)|list|length > 0 %}
+                                    {% if mostrar_acciones %}
+                                        <th>Acciones</th>
+                                    {% endif %}
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for reserva in reservas %}
+                                <tr>
+                                    <td>{{ reserva.propiedad.nombre }}</td>
+                                    <td>{{ reserva.propiedad.direccion }}</td>
+                                    <td>{{ reserva.fecha_inicio.strftime('%d/%m/%Y') }}</td>
+                                    <td>{{ reserva.fecha_fin.strftime('%d/%m/%Y') }}</td>
+                                    <td>{{ reserva.cantidad_personas }}</td>
+                                    {% if not ocultar_acciones and mostrar_acciones %}
+                                    <td>
+                                        {% set tipo_reserva = "" %}
+                                        {% set puede_extender = false %}
+                                        {% if reserva.fecha_inicio > current_date %}
+                                            {% set tipo_reserva = "futuras" %}
+                                            {% if (reserva.fecha_inicio - current_date).days > 2 or (reserva.fecha_inicio - current_date).days == 2 %}
+                                                {% set puede_extender = true %}
+                                            {% endif %}
+                                        {% elif reserva.fecha_inicio <= current_date <= reserva.fecha_fin %}
+                                            {% set tipo_reserva = "activas" %}
+                                            {% if (reserva.fecha_fin - current_date).days > 2 %}
+                                                {% set puede_extender = true %}
+                                            {% endif %}
+                                        {% elif reserva.fecha_fin < current_date %}
+                                            {% if (current_date - reserva.fecha_fin).days > 30 %}
+                                                {% set tipo_reserva = "concluidas" %}
+                                            {% elif reserva.calificacion is none %}
+                                                {% set tipo_reserva = "pendientes" %}
+                                            {% else %}
+                                                {% set tipo_reserva = "editables" %}
+                                            {% endif %}
+                                        {% endif %}
+                                        {% if tipo_reserva == 'futuras' %}
+                                            <!-- Sin botones ni labels -->
+                                        {% elif tipo_reserva == 'concluidas' %}
+                                            {% if reserva.calificacion is not none %}
+                                                <span class="badge bg-success">Calificada</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">No calificada</span>
+                                            {% endif %}
+                                        {% elif tipo_reserva == 'pendientes' %}
+                                            <span class="badge bg-warning text-dark">Pendiente de calificar</span>
+                                        {% elif tipo_reserva == 'editables' %}
+                                            <a href="{{ url_for('main.editar_calificacion', calificacion_id=reserva.calificacion.id) }}" class="btn btn-primary btn-sm ms-2">Editar calificación</a>
+                                            <form method="POST" action="{{ url_for('main.borrar_calificacion', calificacion_id=reserva.calificacion.id) }}" style="display:inline;">
+                                                <button type="button" class="btn btn-danger btn-sm ms-2" onclick="mostrarConfirmacion(this, '¿Estás seguro de que deseas borrar la calificación?')">Borrar calificación</button>
+                                            </form>
+                                        {% endif %}
+                                        {% if puede_extender %}
+                                            <button class="btn btn-info btn-sm ms-2 float-end" data-bs-toggle="modal" data-bs-target="#modalExtenderReserva" data-reserva-id="{{ reserva.id }}" data-fecha-fin="{{ reserva.fecha_fin.strftime('%Y-%m-%d') }}">Extender Reserva</button>
+                                        {% endif %}
+                                    </td>
+                                    {% endif %}
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <div class="alert alert-info text-center">No tienes reservas realizadas.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Extender Reserva -->
+<div class="modal fade" id="modalExtenderReserva" tabindex="-1" aria-labelledby="modalExtenderReservaLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalExtenderReservaLabel">Extender Reserva</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <form id="formExtenderReserva">
+          <input type="hidden" id="extenderReservaId" name="reserva_id">
+          <div class="mb-3">
+            <label for="nuevaFechaFin" class="form-label">Nueva fecha de salida</label>
+            <input type="date" class="form-control" id="nuevaFechaFin" name="nueva_fecha_fin" required>
+            <div id="msgNuevaFechaFin" class="text-danger small"></div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="btnConfirmarExtension">Confirmar</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Script para pasar datos al modal de extensión
+var modalExtender = document.getElementById('modalExtenderReserva');
+modalExtender.addEventListener('show.bs.modal', function (event) {
+  var button = event.relatedTarget;
+  var reservaId = button.getAttribute('data-reserva-id');
+  var fechaFinActual = button.getAttribute('data-fecha-fin');
+  var inputReservaId = document.getElementById('extenderReservaId');
+  var inputNuevaFechaFin = document.getElementById('nuevaFechaFin');
+  inputReservaId.value = reservaId;
+  inputNuevaFechaFin.value = '';
+  inputNuevaFechaFin.min = fechaFinActual;
+  document.getElementById('msgNuevaFechaFin').textContent = '';
+});
+
+document.getElementById('btnConfirmarExtension').onclick = async function() {
+  const reservaId = document.getElementById('extenderReservaId').value;
+  const nuevaFechaFin = document.getElementById('nuevaFechaFin').value;
+  const msg = document.getElementById('msgNuevaFechaFin');
+  msg.textContent = '';
+  if (!nuevaFechaFin) {
+    msg.textContent = 'Selecciona la nueva fecha de salida.';
+    return;
+  }
+  // Llamar al endpoint para iniciar la extensión (puede requerir pago)
+  try {
+    const resp = await fetch('/extender_reserva', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reserva_id: reservaId, nueva_fecha_fin: nuevaFechaFin })
+    });
+    const data = await resp.json();
+    if (data.init_point) {
+      // Redirigir a Mercado Pago
+      window.location.href = data.init_point;
+    } else if (data.success) {
+      location.reload();
+    } else if (data.error) {
+      msg.textContent = data.error;
+    }
+  } catch (e) {
+    msg.textContent = 'Error al procesar la extensión.';
+  }
+};
+</script>
+{% endblock %}
+
+<!-- Script de Bootstrap solo para esta vista -->
+<script src="/static/js/bootstrap.bundle.min.js"></script>

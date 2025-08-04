@@ -1,0 +1,162 @@
+{% extends "base_hero.html" %}
+
+{% block title %}Modificar Propiedad - Alquilando{% endblock %}
+
+{% block hero_content %}
+<div class="d-flex flex-column align-items-center justify-content-center" style="min-height: auto;">
+    <div class="card p-3 shadow text-start" style="max-width: 800px; width: 100%;">
+        <h2 class="text-center text-secondary mb-3">Modificar Propiedad</h2>
+        <form method="POST" action="{{ action_url }}">
+            <div class="row mb-2">
+                <div class="col-md-6">
+                    <label for="nombre" class="form-label text-secondary">Nombre de la Propiedad*</label>
+                    <input type="text" class="form-control" id="nombre" name="nombre" value="{{ propiedad.nombre }}">
+                </div>
+                <div class="col-md-6">
+                    <label for="ubicacion" class="form-label text-secondary">Ubicación*</label>
+                    <input type="text" class="form-control" id="ubicacion" name="ubicacion" value="{{ propiedad.ubicacion }}">
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-4">
+                    <label for="precio" class="form-label text-secondary">Precio*</label>
+                    <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        <input type="number" class="form-control" id="precio" name="precio" step="0.01" value="{{ propiedad.precio }}">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label for="cantidad_habitaciones" class="form-label text-secondary">Cantidad de Habitaciones*</label>
+                    <input type="number" class="form-control" id="cantidad_habitaciones" name="cantidad_habitaciones" value="{{ propiedad.cantidad_habitaciones }}">
+                </div>
+                <div class="col-md-4">
+                    <label for="limite_personas" class="form-label text-secondary">Límite de Personas*</label>
+                    <input type="number" class="form-control" id="limite_personas" name="limite_personas" value="{{ propiedad.limite_personas }}">
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-4">
+                    <label for="porcentaje_pago_reserva" class="form-label text-secondary">Porcentaje a abonar para reservar*</label>
+                    <select class="form-select" id="porcentaje_pago_reserva" name="porcentaje_pago_reserva" required>
+                        <option value="0" {% if propiedad.porcentaje_pago_reserva == 0 %}selected{% endif %}>0%</option>
+                        <option value="20" {% if propiedad.porcentaje_pago_reserva == 20 or propiedad.porcentaje_pago_reserva is not defined %}selected{% endif %}>20%</option>
+                        <option value="100" {% if propiedad.porcentaje_pago_reserva == 100 %}selected{% endif %}>100%</option>
+                    </select>
+                </div>
+                <div class="col-md-8 d-flex align-items-center">
+                    <label for="direccion" class="form-label text-secondary w-100">Dirección*</label>
+                    <input type="text" class="form-control" id="direccion" name="direccion" value="{{ propiedad.direccion }}" required>
+                    <div class="form-check ms-3">
+                        <input class="form-check-input" type="checkbox" id="reembolsable" name="reembolsable" {% if propiedad.reembolsable %}checked{% endif %}>
+                        <label class="form-check-label text-secondary" for="reembolsable">Reembolsable</label>
+                    </div>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-8">
+                    <label for="latitud" class="form-label text-secondary">Latitud*</label>
+                    <input type="number" class="form-control" id="latitud" name="latitud" step="any" value="{{ propiedad.latitud }}">
+                </div>
+                <div class="col-md-4">
+                    <label for="longitud" class="form-label text-secondary">Longitud*</label>
+                    <input type="number" class="form-control" id="longitud" name="longitud" step="any" value="{{ propiedad.longitud }}">
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-12">
+                    <label class="form-label text-secondary mb-1">Características</label>
+                    <div class="d-flex flex-wrap gap-3">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="pet_friendly" name="pet_friendly" {% if propiedad.pet_friendly %}checked{% endif %}>
+                            <label class="form-check-label text-secondary" for="pet_friendly">Pet Friendly</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="cochera" name="cochera" {% if propiedad.cochera %}checked{% endif %}>
+                            <label class="form-check-label text-secondary" for="cochera">Cochera</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="wifi" name="wifi" {% if propiedad.wifi %}checked{% endif %}>
+                            <label class="form-check-label text-secondary" for="wifi">WiFi</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="piscina" name="piscina" {% if propiedad.piscina %}checked{% endif %}>
+                            <label class="form-check-label text-secondary" for="piscina">Piscina</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="patio_trasero" name="patio_trasero" {% if propiedad.patio_trasero %}checked{% endif %}>
+                            <label class="form-check-label text-secondary" for="patio_trasero">Patio Trasero</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="descripcion" class="form-label text-secondary">Descripción</label>
+                <textarea class="form-control" id="descripcion" name="descripcion" rows="2">{{ propiedad.descripcion }}</textarea>
+            </div>
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary" id="btn-guardar" disabled>Guardar Cambios</button>
+                <a href="{{ url_for('main.index') }}" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Habilitar/deshabilitar el botón Guardar Cambios según los campos obligatorios
+document.addEventListener('DOMContentLoaded', function() {
+    const campos = [
+        'nombre',
+        'ubicacion',
+        'precio',
+        'cantidad_habitaciones',
+        'limite_personas',
+        'latitud',
+        'longitud',
+        'direccion'
+    ];
+    const btnGuardar = document.getElementById('btn-guardar');
+
+    function verificarCampos() {
+        let todosConValor = campos.every(id => {
+            const el = document.getElementById(id);
+            return el && el.value.trim() !== '';
+        });
+        btnGuardar.disabled = !todosConValor;
+    }
+
+    campos.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', verificarCampos);
+        }
+    });
+
+    // Llamar al cargar la página por si hay valores precargados
+    verificarCampos();
+
+    // Solo permitir números del 0 al 9 en los campos numéricos
+    ['precio', 'cantidad_habitaciones', 'limite_personas'].forEach(function(id) {
+        var input = document.getElementById(id);
+        if (input) {
+            input.addEventListener('keypress', function(e) {
+                // Permitir solo dígitos
+                if (e.key < '0' || e.key > '9') {
+                    e.preventDefault();
+                }
+            });
+            input.addEventListener('paste', function(e) {
+                e.preventDefault();
+                var text = (e.originalEvent || e).clipboardData.getData('text/plain');
+                if (/^[0-9]+$/.test(text)) {
+                    this.value = text;
+                }
+            });
+            // Opcional: evitar la rueda del mouse para cambiar el valor
+            input.addEventListener('wheel', function(e) {
+                this.blur();
+            });
+        }
+    });
+});
+</script>
+{% endblock %} 

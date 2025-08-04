@@ -1,0 +1,713 @@
+from database import db
+from models.rol import Rol
+from models.permiso import Permiso
+from models.user import Cliente, Administrador, Encargado, SuperUsuario
+from models.propiedad import Propiedad
+from models.imagen import Imagen
+from models.calificacion import Calificacion
+from models.propiedad_administrador import propiedad_administrador
+from models.favoritos import favoritos
+from models.reserva import Reserva
+from datetime import datetime, date, timedelta
+from models.conversacion import Conversacion
+from models.mensaje_chat import MensajeChat
+from models.pago import Pago
+
+
+def init_db():
+    # Limpiar reservas existentes
+    Reserva.query.delete()
+    db.session.commit()
+    
+    # Roles
+    rol_superusuario = Rol.query.filter_by(nombre='superusuario').first()
+    if not rol_superusuario:
+        rol_superusuario = Rol(nombre='superusuario')
+        db.session.add(rol_superusuario)
+    rol_admin = Rol.query.filter_by(nombre='admin').first()
+    if not rol_admin:
+        rol_admin = Rol(nombre='admin')
+        db.session.add(rol_admin)
+    rol_cliente = Rol.query.filter_by(nombre='cliente').first()
+    if not rol_cliente:
+        rol_cliente = Rol(nombre='cliente')
+        db.session.add(rol_cliente)
+    rol_encargado = Rol.query.filter_by(nombre='encargado').first()
+    if not rol_encargado:
+        rol_encargado = Rol(nombre='encargado')
+        db.session.add(rol_encargado)
+    db.session.commit()
+
+    # Permisos
+    
+    crear_propiedad = Permiso.query.filter_by(nombre='crear_propiedad').first()
+    if not crear_propiedad:
+        crear_propiedad = Permiso(nombre='crear_propiedad')
+        db.session.add(crear_propiedad)
+    eliminar_propiedad = Permiso.query.filter_by(nombre='eliminar_propiedad').first()
+    if not eliminar_propiedad:
+        eliminar_propiedad = Permiso(nombre='eliminar_propiedad')
+        db.session.add(eliminar_propiedad)
+    modificar_propiedad = Permiso.query.filter_by(nombre='modificar_propiedad').first()
+    if not modificar_propiedad:
+        modificar_propiedad = Permiso(nombre='modificar_propiedad')
+        db.session.add(modificar_propiedad)
+    ver_propiedades = Permiso.query.filter_by(nombre='ver_propiedades').first()
+    if not ver_propiedades:
+        ver_propiedades = Permiso(nombre='ver_propiedades')
+        db.session.add(ver_propiedades)
+    
+    crear_encargado = Permiso.query.filter_by(nombre='crear_encargado').first()
+    if not crear_encargado:
+        crear_encargado = Permiso(nombre='crear_encargado')
+        db.session.add(crear_encargado)
+    eliminar_encargado = Permiso.query.filter_by(nombre='eliminar_encargado').first()
+    if not eliminar_encargado:
+        eliminar_encargado = Permiso(nombre='eliminar_encargado')
+        db.session.add(eliminar_encargado)
+    
+    asignar_propiedad_encargado = Permiso.query.filter_by(nombre='asignar_propiedad_encargado').first()
+    if not asignar_propiedad_encargado:
+        asignar_propiedad_encargado = Permiso(nombre='asignar_propiedad_encargado')
+        db.session.add(asignar_propiedad_encargado)
+    desasignar_propiedad_encargado = Permiso.query.filter_by(nombre='desasignar_propiedad_encargado').first()
+    if not desasignar_propiedad_encargado:
+        desasignar_propiedad_encargado = Permiso(nombre='desasignar_propiedad_encargado')
+        db.session.add(desasignar_propiedad_encargado)
+    
+    crear_admin = Permiso.query.filter_by(nombre='crear_admin').first()
+    if not crear_admin:
+        crear_admin = Permiso(nombre='crear_admin')
+        db.session.add(crear_admin)
+    eliminar_admin = Permiso.query.filter_by(nombre='eliminar_admin').first()
+    if not eliminar_admin:
+        eliminar_admin = Permiso(nombre='eliminar_admin')
+        db.session.add(eliminar_admin)
+    
+    ver_encargados = Permiso.query.filter_by(nombre='ver_encargados').first()
+    if not ver_encargados:
+        ver_encargados = Permiso(nombre='ver_encargados')
+        db.session.add(ver_encargados)
+    ver_administradores = Permiso.query.filter_by(nombre='ver_administradores').first()
+    if not ver_administradores:
+        ver_administradores = Permiso(nombre='ver_administradores')
+        db.session.add(ver_administradores)
+    añadir_favorito = Permiso.query.filter_by(nombre='añadir_favorito').first()
+    if not añadir_favorito:
+        añadir_favorito = Permiso(nombre='añadir_favorito')
+        db.session.add(añadir_favorito)
+    eliminar_favorito = Permiso.query.filter_by(nombre='eliminar_favorito').first()
+    if not eliminar_favorito:
+        eliminar_favorito = Permiso(nombre='eliminar_favorito')
+        db.session.add(eliminar_favorito)
+        
+    # Asignar permisos a roles de forma segura
+    if crear_propiedad not in rol_superusuario.permisos:
+        rol_superusuario.permisos.append(crear_propiedad)
+    if eliminar_propiedad not in rol_superusuario.permisos:
+        rol_superusuario.permisos.append(eliminar_propiedad)
+    if modificar_propiedad not in rol_superusuario.permisos:
+        rol_superusuario.permisos.append(modificar_propiedad)
+    if ver_propiedades not in rol_superusuario.permisos:
+        rol_superusuario.permisos.append(ver_propiedades)
+    if crear_encargado not in rol_superusuario.permisos:
+        rol_superusuario.permisos.append(crear_encargado)
+    if eliminar_encargado not in rol_superusuario.permisos:
+        rol_superusuario.permisos.append(eliminar_encargado)
+    if asignar_propiedad_encargado not in rol_superusuario.permisos:
+        rol_superusuario.permisos.append(asignar_propiedad_encargado)
+    if desasignar_propiedad_encargado not in rol_superusuario.permisos:
+        rol_superusuario.permisos.append(desasignar_propiedad_encargado)
+    if crear_admin not in rol_superusuario.permisos:
+        rol_superusuario.permisos.append(crear_admin)
+    if eliminar_admin not in rol_superusuario.permisos:
+        rol_superusuario.permisos.append(eliminar_admin)
+    if ver_encargados not in rol_superusuario.permisos:
+        rol_superusuario.permisos.append(ver_encargados)
+    if ver_administradores not in rol_superusuario.permisos:
+        rol_superusuario.permisos.append(ver_administradores)
+    
+    if crear_propiedad not in rol_admin.permisos:
+        rol_admin.permisos.append(crear_propiedad)
+    if eliminar_propiedad not in rol_admin.permisos:
+        rol_admin.permisos.append(eliminar_propiedad)
+    if modificar_propiedad not in rol_admin.permisos:
+        rol_admin.permisos.append(modificar_propiedad)
+    if ver_propiedades not in rol_admin.permisos:
+        rol_admin.permisos.append(ver_propiedades)
+    if crear_encargado not in rol_admin.permisos:
+        rol_admin.permisos.append(crear_encargado)
+    if eliminar_encargado not in rol_admin.permisos:
+        rol_admin.permisos.append(eliminar_encargado)
+    if asignar_propiedad_encargado not in rol_admin.permisos:
+        rol_admin.permisos.append(asignar_propiedad_encargado)
+    if desasignar_propiedad_encargado not in rol_admin.permisos:
+        rol_admin.permisos.append(desasignar_propiedad_encargado)
+    if ver_encargados not in rol_admin.permisos:
+        rol_admin.permisos.append(ver_encargados)
+    if ver_administradores not in rol_admin.permisos:
+        rol_admin.permisos.append(ver_administradores)
+    
+    if ver_propiedades not in rol_encargado.permisos:
+        rol_encargado.permisos.append(ver_propiedades)
+    
+    if añadir_favorito not in rol_cliente.permisos:
+        rol_cliente.permisos.append(añadir_favorito)
+    if eliminar_favorito not in rol_cliente.permisos:
+        rol_cliente.permisos.append(eliminar_favorito)
+    
+    db.session.commit()
+
+    # Usuarios
+    superuser = SuperUsuario.query.filter_by(email='sofia.garcia@admin.com').first()
+    if not superuser:
+        superuser = SuperUsuario(nombre='Sofía', apellido='García', dni='30123456', email='sofia.garcia@admin.com', contrasena='adminSG1', telefono='1134567890', nacionalidad='Argentina', rol=rol_superusuario)
+        db.session.add(superuser)
+    admin = Administrador.query.filter_by(email='martin.perez@admin.com').first()
+    if not admin:
+        admin = Administrador(nombre='Martín', apellido='Pérez', dni='32123456', email='martin.perez@admin.com', contrasena='adminMP2', telefono='1145678901', nacionalidad='Argentina', rol=rol_admin)
+        db.session.add(admin)
+    encargado = Encargado.query.filter_by(email='lucia.fernandez@encargado.com').first()
+    if not encargado:
+        encargado = Encargado(nombre='Lucía', apellido='Fernández', dni='34123456', email='lucia.fernandez@encargado.com', contrasena='encargLF3', telefono='1156789012', nacionalidad='Argentina', rol=rol_encargado)
+        db.session.add(encargado)
+
+    cliente = Cliente.query.filter_by(email='juan.lopez@cliente.com').first()
+    if not cliente:
+        cliente = Cliente(
+            nombre='Juan', apellido='López', dni='36123456', email='juan.lopez@cliente.com',
+            contrasena='clienteJL4', telefono='1167890123', nacionalidad='Argentina', rol=rol_cliente, tarjeta ='42748572649274638',
+            direccion='Av. Corrientes 1234, CABA', fecha_nacimiento=date(1990, 5, 15)
+        )
+        db.session.add(cliente)
+    encargado2 = Encargado.query.filter_by(email='marcos.silva@encargado.com').first()
+    if not encargado2:
+        encargado2 = Encargado(nombre='Marcos', apellido='Silva', dni='35123456', email='marcos.silva@encargado.com', contrasena='encargMS4', telefono='1178901234', nacionalidad='Argentina', rol=rol_encargado)
+        db.session.add(encargado2)
+    encargado3 = Encargado.query.filter_by(email='carla.gomez@encargado.com').first()
+    if not encargado3:
+        encargado3 = Encargado(nombre='Carla', apellido='Gómez', dni='36123457', email='carla.gomez@encargado.com', contrasena='encargCG5', telefono='1189012345', nacionalidad='Argentina', rol=rol_encargado)
+        db.session.add(encargado3)
+    db.session.commit()
+
+    # Propiedades
+    prop1 = Propiedad.query.filter_by(nombre='Casa Palermo').first()
+    if not prop1:
+        prop1 = Propiedad(nombre='Casa Palermo', ubicacion='Palermo, CABA', direccion='Gorriti 4800, Palermo, CABA', precio=250000, cantidad_habitaciones=4, limite_personas=7, pet_friendly=True, cochera=False, wifi=True, piscina=True, patio_trasero=True, descripcion='Casa moderna con pileta y jardín en el corazón de Palermo.', superusuario=superuser, encargado=encargado, latitud=-34.5831, longitud=-58.4246, porcentaje_pago_reserva=20, reembolsable=True)
+        db.session.add(prop1)
+    else:
+        prop1.latitud = -34.5831
+        prop1.longitud = -58.4246
+        prop1.reembolsable = True
+    prop2 = Propiedad.query.filter_by(nombre='Depto Recoleta').first()
+    if not prop2:
+        prop2 = Propiedad(nombre='Depto Recoleta', ubicacion='Recoleta, CABA', direccion='Arenales 2100, Recoleta, CABA', precio=180000, cantidad_habitaciones=3, limite_personas=5, pet_friendly=False, cochera=False, wifi=True, piscina=False, patio_trasero=False, descripcion='Departamento elegante cerca de Plaza Francia.', superusuario=superuser, encargado=encargado, latitud=-34.5895, longitud=-58.3936, porcentaje_pago_reserva=0, reembolsable=False)
+        db.session.add(prop2)
+    else:
+        prop2.latitud = -34.5895
+        prop2.longitud = -58.3936
+        prop2.reembolsable = False
+    prop3 = Propiedad.query.filter_by(nombre='Casa San Isidro').first()
+    if not prop3:
+        prop3 = Propiedad(nombre='Casa San Isidro', ubicacion='San Isidro, Buenos Aires', direccion='Av. del Libertador 16200, San Isidro, Buenos Aires', precio=320000, cantidad_habitaciones=5, limite_personas=8, pet_friendly=True, cochera=True, wifi=True, piscina=True, patio_trasero=True, descripcion='Amplia casa familiar con parque y pileta en zona norte.', superusuario=superuser, encargado=encargado, latitud=-34.4732, longitud=-58.5122, porcentaje_pago_reserva=100, reembolsable=True)
+        db.session.add(prop3)
+    else:
+        prop3.latitud = -34.4732
+        prop3.longitud = -58.5122
+        prop3.reembolsable = True
+    prop4 = Propiedad.query.filter_by(nombre='Depto Rosario Centro').first()
+    if not prop4:
+        prop4 = Propiedad(nombre='Depto Rosario Centro', ubicacion='Rosario, Santa Fe', direccion='Córdoba 1200, Rosario, Santa Fe', precio=95000, cantidad_habitaciones=2, limite_personas=4, pet_friendly=False, cochera=False, wifi=True, piscina=False, patio_trasero=False, descripcion='Departamento céntrico a metros del Monumento a la Bandera.', superusuario=superuser, encargado=encargado, latitud=-32.9468, longitud=-60.6393, porcentaje_pago_reserva=20, reembolsable=False)
+        db.session.add(prop4)
+    else:
+        prop4.latitud = -32.9468
+        prop4.longitud = -60.6393
+        prop4.reembolsable = False
+    prop5 = Propiedad.query.filter_by(nombre='Casa Bariloche Lago').first()
+    if not prop5:
+        prop5 = Propiedad(nombre='Casa Bariloche Lago', ubicacion='San Carlos de Bariloche, Río Negro', direccion='Av. Bustillo Km 8, San Carlos de Bariloche, Río Negro', precio=400000, cantidad_habitaciones=6, limite_personas=10, pet_friendly=True, cochera=True, wifi=True, piscina=True, patio_trasero=True, descripcion='Casa de lujo con vista al lago Nahuel Huapi.', superusuario=superuser, encargado=encargado, latitud=-41.0999, longitud=-71.4196, porcentaje_pago_reserva=0, reembolsable=True)
+        db.session.add(prop5)
+    else:
+        prop5.latitud = -41.0999
+        prop5.longitud = -71.4196
+        prop5.reembolsable = True
+    prop6 = Propiedad.query.filter_by(nombre='Depto Mendoza Centro').first()
+    if not prop6:
+        prop6 = Propiedad(nombre='Depto Mendoza Centro', ubicacion='Mendoza', direccion='Av. San Martín 800, Mendoza', precio=110000, cantidad_habitaciones=2, limite_personas=4, pet_friendly=False, cochera=False, wifi=True, piscina=False, patio_trasero=False, descripcion='Departamento moderno en pleno centro de Mendoza.', superusuario=superuser, encargado=encargado, latitud=-32.8908, longitud=-68.8447, porcentaje_pago_reserva=100, reembolsable=False)
+        db.session.add(prop6)
+    else:
+        prop6.latitud = -32.8908
+        prop6.longitud = -68.8447
+        prop6.reembolsable = False
+    prop7 = Propiedad.query.filter_by(nombre='Casa Córdoba Nueva Córdoba').first()
+    if not prop7:
+        prop7 = Propiedad(nombre='Casa Córdoba Nueva Córdoba', ubicacion='Córdoba', direccion='Obispo Trejo 1200, Nueva Córdoba, Córdoba', precio=210000, cantidad_habitaciones=3, limite_personas=6, pet_friendly=True, cochera=True, wifi=True, piscina=False, patio_trasero=True, descripcion='Casa amplia cerca del Parque Sarmiento.', superusuario=superuser, encargado=encargado, latitud=-31.4273, longitud=-64.1830, porcentaje_pago_reserva=20, reembolsable=True)
+        db.session.add(prop7)
+    else:
+        prop7.latitud = -31.4273
+        prop7.longitud = -64.1830
+        prop7.reembolsable = True
+    prop8 = Propiedad.query.filter_by(nombre='Depto Mar del Plata Playa').first()
+    if not prop8:
+        prop8 = Propiedad(nombre='Depto Mar del Plata Playa', ubicacion='Mar del Plata, Buenos Aires', direccion='Boulevard Marítimo 2200, Mar del Plata, Buenos Aires', precio=130000, cantidad_habitaciones=2, limite_personas=4, pet_friendly=False, cochera=False, wifi=True, piscina=False, patio_trasero=False, descripcion='Departamento con vista al mar, a metros de Playa Bristol.', superusuario=superuser, encargado=encargado, latitud=-38.0055, longitud=-57.5426, porcentaje_pago_reserva=0, reembolsable=False)
+        db.session.add(prop8)
+    else:
+        prop8.latitud = -38.0055
+        prop8.longitud = -57.5426
+        prop8.reembolsable = False
+    prop9 = Propiedad.query.filter_by(nombre='Casa Tigre Delta').first()
+    if not prop9:
+        prop9 = Propiedad(nombre='Casa Tigre Delta', ubicacion='Tigre, Buenos Aires', direccion='Río Sarmiento 300, Tigre, Buenos Aires', precio=270000, cantidad_habitaciones=4, limite_personas=8, pet_friendly=True, cochera=True, wifi=True, piscina=True, patio_trasero=True, descripcion='Casa isleña con muelle propio en el Delta de Tigre.', superusuario=superuser, encargado=None, latitud=-34.4089, longitud=-58.5796, porcentaje_pago_reserva=100, reembolsable=True)
+        db.session.add(prop9)
+    else:
+        prop9.latitud = -34.4089
+        prop9.longitud = -58.5796
+        prop9.reembolsable = True
+        prop9.encargado = None
+    prop10 = Propiedad.query.filter_by(nombre='Depto Salta Balcarce').first()
+    if not prop10:
+        prop10 = Propiedad(nombre='Depto Salta Balcarce', ubicacion='Salta', direccion='Balcarce 500, Salta', precio=90000, cantidad_habitaciones=2, limite_personas=3, pet_friendly=False, cochera=False, wifi=True, piscina=False, patio_trasero=False, descripcion='Departamento turístico en la zona de peñas y bares.', superusuario=superuser, encargado=encargado, latitud=-24.7883, longitud=-65.4106, porcentaje_pago_reserva=20, reembolsable=False)
+        db.session.add(prop10)
+    else:
+        prop10.latitud = -24.7883
+        prop10.longitud = -65.4106
+        prop10.reembolsable = False
+    db.session.commit()
+
+    # Relación muchos-a-muchos administradores-propiedades
+    if admin not in prop1.administradores:
+        prop1.administradores.append(admin)
+    if admin not in prop2.administradores:
+        prop2.administradores.append(admin)
+    if admin not in prop3.administradores:
+        prop3.administradores.append(admin)
+    if admin not in prop4.administradores:
+        prop4.administradores.append(admin)
+    if admin not in prop5.administradores:
+        prop5.administradores.append(admin)
+    if admin not in prop6.administradores:
+        prop6.administradores.append(admin)
+    if admin not in prop7.administradores:
+        prop7.administradores.append(admin)
+    if admin not in prop8.administradores:
+        prop8.administradores.append(admin)
+    if admin not in prop9.administradores:
+        prop9.administradores.append(admin)
+    if admin not in prop10.administradores:
+        prop10.administradores.append(admin)
+    
+        
+    # Reservas
+    hoy = datetime.now().date()
+    def estado_reserva(fecha_inicio, fecha_fin):
+        if fecha_fin < hoy:
+            return 'concretada'
+        elif fecha_inicio > hoy:
+            return 'futura'
+        else:
+            return 'curso'
+
+    fecha_inicio = '2025-6-24'    
+    fecha_fin = '2025-6-30'
+    fecha_inicio_convertida = datetime.strptime(fecha_inicio, '%Y-%m-%d')
+    fecha_fin_convertida = datetime.strptime(fecha_fin, '%Y-%m-%d')
+    reserva1 = Reserva.query.filter_by(cliente_id=cliente.id, propiedad_id=prop1.id, fecha_inicio=fecha_inicio_convertida, fecha_fin=fecha_fin_convertida).first()
+    if not reserva1:
+        reserva1 = Reserva(cliente=cliente, propiedad=prop1, fecha_inicio=fecha_inicio_convertida, fecha_fin=fecha_fin_convertida, cantidad_personas=3, estado=estado_reserva(fecha_inicio_convertida.date(), fecha_fin_convertida.date()))
+        db.session.add(reserva1)
+
+    # Segunda reserva para pruebas de calificación (junio, concretada)
+    fecha_inicio2 = '2025-6-01'
+    fecha_fin2 = '2025-6-04'
+    fecha_inicio_convertida2 = datetime.strptime(fecha_inicio2, '%Y-%m-%d')
+    fecha_fin_convertida2 = datetime.strptime(fecha_fin2, '%Y-%m-%d')
+    reserva2 = Reserva.query.filter_by(cliente_id=cliente.id, propiedad_id=prop1.id, fecha_inicio=fecha_inicio_convertida2, fecha_fin=fecha_fin_convertida2).first()
+    if not reserva2:
+        reserva2 = Reserva(cliente=cliente, propiedad=prop1, fecha_inicio=fecha_inicio_convertida2, fecha_fin=fecha_fin_convertida2, cantidad_personas=2, estado=estado_reserva(fecha_inicio_convertida2.date(), fecha_fin_convertida2.date()))
+        db.session.add(reserva2)
+
+    # Tercera reserva en el pasado para probar 'No calificada' (pendiente)
+    fecha_inicio3 = '2024-05-01'
+    fecha_fin3 = '2024-05-05'
+    fecha_inicio_convertida3 = datetime.strptime(fecha_inicio3, '%Y-%m-%d')
+    fecha_fin_convertida3 = datetime.strptime(fecha_fin3, '%Y-%m-%d')
+    reserva3 = Reserva.query.filter_by(cliente_id=cliente.id, propiedad_id=prop1.id, fecha_inicio=fecha_inicio_convertida3, fecha_fin=fecha_fin_convertida3).first()
+    if not reserva3:
+        reserva3 = Reserva(cliente=cliente, propiedad=prop1, fecha_inicio=fecha_inicio_convertida3, fecha_fin=fecha_fin_convertida3, cantidad_personas=2, estado=estado_reserva(fecha_inicio_convertida3.date(), fecha_fin_convertida3.date()))
+        db.session.add(reserva3)
+
+    # Cuarta reserva en julio (pendiente) - Casa Palermo
+    fecha_inicio4 = '2025-7-01'
+    fecha_fin4 = '2025-7-05'
+    fecha_inicio_convertida4 = datetime.strptime(fecha_inicio4, '%Y-%m-%d')
+    fecha_fin_convertida4 = datetime.strptime(fecha_fin4, '%Y-%m-%d')
+    reserva4 = Reserva.query.filter_by(cliente_id=cliente.id, propiedad_id=prop1.id, fecha_inicio=fecha_inicio_convertida4, fecha_fin=fecha_fin_convertida4).first()
+    if not reserva4:
+        reserva4 = Reserva(cliente=cliente, propiedad=prop1, fecha_inicio=fecha_inicio_convertida4, fecha_fin=fecha_fin_convertida4, cantidad_personas=2, estado=estado_reserva(fecha_inicio_convertida4.date(), fecha_fin_convertida4.date()))
+        db.session.add(reserva4)
+
+    # Reserva en agosto (pendiente) - Casa Palermo, fechas no superpuestas
+    fecha_inicio6 = '2025-8-10'
+    fecha_fin6 = '2025-8-15'
+    fecha_inicio_convertida6 = datetime.strptime(fecha_inicio6, '%Y-%m-%d')
+    fecha_fin_convertida6 = datetime.strptime(fecha_fin6, '%Y-%m-%d')
+    reserva6 = Reserva.query.filter_by(cliente_id=cliente.id, propiedad_id=prop1.id, fecha_inicio=fecha_inicio_convertida6, fecha_fin=fecha_fin_convertida6).first()
+    if not reserva6:
+        reserva6 = Reserva(cliente=cliente, propiedad=prop1, fecha_inicio=fecha_inicio_convertida6, fecha_fin=fecha_fin_convertida6, cantidad_personas=3, estado=estado_reserva(fecha_inicio_convertida6.date(), fecha_fin_convertida6.date()))
+        db.session.add(reserva6)
+
+    # Reserva concretada en agosto (Casa Palermo, fechas no superpuestas)
+    fecha_inicio7 = '2025-8-20'
+    fecha_fin7 = '2025-8-25'
+    fecha_inicio_convertida7 = datetime.strptime(fecha_inicio7, '%Y-%m-%d')
+    fecha_fin_convertida7 = datetime.strptime(fecha_fin7, '%Y-%m-%d')
+    reserva7 = Reserva.query.filter_by(cliente_id=cliente.id, propiedad_id=prop1.id, fecha_inicio=fecha_inicio_convertida7, fecha_fin=fecha_fin_convertida7).first()
+    if not reserva7:
+        reserva7 = Reserva(cliente=cliente, propiedad=prop1, fecha_inicio=fecha_inicio_convertida7, fecha_fin=fecha_fin_convertida7, cantidad_personas=2, estado=estado_reserva(fecha_inicio_convertida7.date(), fecha_fin_convertida7.date()))
+        db.session.add(reserva7)
+
+    # Reserva concretada en prop10 (junio-julio, fechas no superpuestas con prop2)
+    fecha_inicio5 = '2025-6-30'
+    fecha_fin5 = '2025-7-05'
+    fecha_inicio_convertida5 = datetime.strptime(fecha_inicio5, '%Y-%m-%d')
+    fecha_fin_convertida5 = datetime.strptime(fecha_fin5, '%Y-%m-%d')
+    reserva5 = Reserva.query.filter_by(cliente_id=cliente.id, propiedad_id=prop10.id, fecha_inicio=fecha_inicio_convertida5, fecha_fin=fecha_fin_convertida5).first()
+    if not reserva5:    
+        reserva5 = Reserva(cliente=cliente, propiedad=prop10, fecha_inicio=fecha_inicio_convertida5, fecha_fin=fecha_fin_convertida5, cantidad_personas=2, estado=estado_reserva(fecha_inicio_convertida5.date(), fecha_fin_convertida5.date()))
+        db.session.add(reserva5)
+
+    # Reserva en curso para pruebas
+    fecha_inicio_curso = hoy - timedelta(days=1)
+    fecha_fin_curso = hoy + timedelta(days=3)
+    reserva_curso = Reserva.query.filter_by(cliente_id=cliente.id, propiedad_id=prop2.id, fecha_inicio=fecha_inicio_curso, fecha_fin=fecha_fin_curso).first()
+    if not reserva_curso:
+        reserva_curso = Reserva(cliente=cliente, propiedad=prop2, fecha_inicio=fecha_inicio_curso, fecha_fin=fecha_fin_curso, cantidad_personas=2, estado=estado_reserva(fecha_inicio_curso, fecha_fin_curso))
+        db.session.add(reserva_curso)
+    # Quitar el encargado asignado a prop2
+    prop2.encargado_id = None
+    db.session.commit()
+
+    # Reserva solicitada por HU: Juan López en Casa Córdoba Nueva Córdoba
+    fecha_inicio_juan = '2025-07-08'
+    fecha_fin_juan = '2025-07-12'
+    fecha_inicio_juan_dt = datetime.strptime(fecha_inicio_juan, '%Y-%m-%d')
+    fecha_fin_juan_dt = datetime.strptime(fecha_fin_juan, '%Y-%m-%d')
+    reserva_juan = Reserva.query.filter_by(cliente_id=cliente.id, propiedad_id=prop7.id, fecha_inicio=fecha_inicio_juan_dt, fecha_fin=fecha_fin_juan_dt).first()
+    if not reserva_juan:
+        reserva_juan = Reserva(cliente=cliente, propiedad=prop7, fecha_inicio=fecha_inicio_juan_dt, fecha_fin=fecha_fin_juan_dt, cantidad_personas=4, estado='concretada')
+        db.session.add(reserva_juan)
+        db.session.commit()  # Commit inmediato para asegurar el ID
+    else:
+        db.session.commit()  # Por si la reserva ya existía pero no estaba en sesión
+
+    # Pagos para la reserva de Juan López en Casa Córdoba Nueva Córdoba
+    if 'reserva_juan' in locals():
+        monto_total = prop7.precio
+        monto_adelanto = monto_total * 0.2
+        monto_restante = monto_total * 0.8
+        pago_adelanto = Pago.query.filter_by(reserva_id=reserva_juan.id, monto=monto_adelanto).first()
+        if not pago_adelanto:
+            pago_adelanto = Pago(
+                monto=monto_adelanto,
+                fecha_emision=datetime.now(),
+                fecha_cobro_total=datetime.now(),
+                status='paid',
+                reserva_id=reserva_juan.id
+            )
+            db.session.add(pago_adelanto)
+        pago_restante = Pago.query.filter_by(reserva_id=reserva_juan.id, monto=monto_restante).first()
+        if not pago_restante:
+            pago_restante = Pago(
+                monto=monto_restante,
+                fecha_emision=datetime.now(),
+                fecha_cobro_total=None,
+                status='pending',
+                reserva_id=reserva_juan.id
+            )
+            db.session.add(pago_restante)
+        db.session.commit()  # Commit tras crear los pagos
+
+    db.session.commit()
+    
+    
+    # Calificaciones
+    
+    estrella_vista = 5
+    estrella_ubicacion = 5
+    estrella_limpieza = 5
+    descripcion_calificacion = 'Excelente experiencia, la casa es hermosa y muy cómoda.'
+    calificacion1 = Calificacion.query.filter_by(reserva_id = reserva1.id).first()  
+    if not calificacion1:
+        calificacion1 = Calificacion(
+            reserva=reserva1, cliente=cliente, propiedad=prop1,
+            estrellas_vista=estrella_vista, estrellas_ubicacion=estrella_ubicacion,
+            estrellas_limpieza=estrella_limpieza, descripcion=descripcion_calificacion
+        )
+        db.session.add(calificacion1)
+        
+    estrella_vista2 = 4
+    estrella_ubicacion2 = 4
+    estrella_limpieza2 = 4
+    descripcion_calificacion2 = 'Muy buena estadía, la ubicación es excelente pero podría mejorar la limpieza.'
+    calificacion2 = Calificacion.query.filter_by(reserva_id = reserva2.id).first()
+    if not calificacion2:
+        calificacion2 = Calificacion(
+            reserva=reserva2, cliente=cliente, propiedad=prop1,
+            estrellas_vista=estrella_vista2, estrellas_ubicacion=estrella_ubicacion2,
+            estrellas_limpieza=estrella_limpieza2, descripcion=descripcion_calificacion2
+        )
+        db.session.add(calificacion2)
+        
+        
+    estrella_vista3 = 3
+    estrella_ubicacion3 = 3
+    estrella_limpieza3 = 1
+    descripcion_calificacion3 = 'La casa es bonita pero la limpieza fue deficiente y había problemas con el wifi.'
+    calificacion3 = Calificacion.query.filter_by(reserva_id = reserva3.id).first()
+    if not calificacion3:
+        calificacion3 = Calificacion(
+            reserva=reserva3, cliente=cliente, propiedad=prop1,
+            estrellas_vista=estrella_vista3, estrellas_ubicacion=estrella_ubicacion3,
+            estrellas_limpieza=estrella_limpieza3, descripcion=descripcion_calificacion3
+        )
+        db.session.add(calificacion3)
+        
+    estrella_vista4 = 1
+    estrella_ubicacion4 = 1
+    estrella_limpieza4 = 1
+    descripcion_calificacion4 = 'Muy mala experiencia, la casa estaba sucia y no funcionaba el aire acondicionado.'
+    calificacion4 = Calificacion.query.filter_by(reserva_id = reserva4.id).first()
+    if not calificacion4:
+        calificacion4 = Calificacion(
+            reserva=reserva4, cliente=cliente, propiedad=prop2,
+            estrellas_vista=estrella_vista4, estrellas_ubicacion=estrella_ubicacion4,
+            estrellas_limpieza=estrella_limpieza4, descripcion=descripcion_calificacion4
+        )
+        db.session.add(calificacion4)
+        
+        
+    fecha_inicio10 = '2025-2-20'
+    fecha_fin10 = '2025-2-25'
+    fecha_inicio_convertida10 = datetime.strptime(fecha_inicio10, '%Y-%m-%d')
+    fecha_fin_convertida10 = datetime.strptime(fecha_fin10, '%Y-%m-%d')
+    reserva10 = Reserva.query.filter_by(cliente_id=cliente.id, propiedad_id=prop9.id, fecha_inicio=fecha_inicio_convertida10, fecha_fin=fecha_fin_convertida10).first()
+    if not reserva10:
+        reserva10 = Reserva(cliente=cliente, propiedad=prop9, fecha_inicio=fecha_inicio_convertida10, fecha_fin=fecha_fin_convertida10, cantidad_personas=2, estado='concretada')
+        db.session.add(reserva10)
+        
+        
+    fecha_inicio11 = '2025-7-14'
+    fecha_fin11 = '2025-7-20'
+    fecha_inicio_convertida11 = datetime.strptime(fecha_inicio11, '%Y-%m-%d')
+    fecha_fin_convertida11 = datetime.strptime(fecha_fin11, '%Y-%m-%d')
+    reserva11 = Reserva.query.filter_by(cliente_id=cliente.id, propiedad_id=prop8.id, fecha_inicio=fecha_inicio_convertida11, fecha_fin=fecha_fin_convertida11).first()
+    if not reserva11:
+        reserva11 = Reserva(cliente=cliente, propiedad=prop8, fecha_inicio=fecha_inicio_convertida11, fecha_fin=fecha_fin_convertida11, cantidad_personas=2, estado='concretada')
+        db.session.add(reserva11)
+        
+    db.session.commit()
+    
+    # Conversaciones
+    conversacion1 = Conversacion.query.filter_by(cliente_id=cliente.id,estado = 'cerrada', reserva_id=reserva3.id, tipo = 'futuro').first()
+    if not conversacion1:
+        conversacion1 = Conversacion(cliente_id=cliente.id, estado = 'cerrada', reserva_id=reserva3.id, tipo='futuro')
+        db.session.add(conversacion1)
+    msj_1 = MensajeChat.query.filter_by(user=cliente.nombre, rol=cliente.tipo, conversacion=conversacion1, msg='Hola, me gustaria contactarme con Alquilando').first()
+    if not msj_1:
+        msj_1 = MensajeChat(user=cliente.nombre, rol= cliente.tipo, conversacion=conversacion1, msg='Hola, me gustaria contactarme con Alquilando')
+        db.session.add(msj_1)
+    msj_2 = MensajeChat.query.filter_by(user=superuser.nombre, rol=superuser.tipo, conversacion_id=conversacion1.id, msg='Gracias por contactarnos, en un momento estamos con usted.').first()
+    if not msj_2:
+        msj_2 = MensajeChat(user=superuser.nombre, rol=superuser.tipo, conversacion=conversacion1, msg='Gracias por contactarnos, en un momento estamos con usted.')
+        db.session.add(msj_2)
+    
+    msj_5 = MensajeChat.query.filter_by(user=superuser.nombre, rol=superuser.tipo, conversacion_id=conversacion1.id, msg='Hola Juan, ¿en qué puedo ayudarte?').first()
+    if not msj_5:
+        msj_5 = MensajeChat(user=superuser.nombre, rol=superuser.tipo, conversacion=conversacion1, msg='Hola Juan, ¿en qué puedo ayudarte?')
+        db.session.add(msj_5)
+    msj_6 = MensajeChat.query.filter_by(user=cliente.nombre, rol=cliente.tipo, conversacion_id=conversacion1.id, msg='Hola, tengo una consulta sobre la ubicacion de la propiedad. Esta cerca de La Boca?').first()
+    if not msj_6:
+        msj_6 = MensajeChat(user=cliente.nombre, rol=cliente.tipo, conversacion=conversacion1, msg='Hola, tengo una consulta sobre la ubicacion de la propiedad. Esta cerca de La Boca?')
+        db.session.add(msj_6)
+    
+    msj_7 = MensajeChat.query.filter_by(user=superuser.nombre, rol=superuser.tipo, conversacion_id=conversacion1.id, msg='No, la propiedad está en Palermo, que es una zona diferente.').first()
+    if not msj_7:
+        msj_7 = MensajeChat(user=superuser.nombre, rol=superuser.tipo, conversacion=conversacion1, msg='No, la propiedad está en Palermo, que es una zona diferente.')
+        db.session.add(msj_7)
+        
+    conversacion2 = Conversacion.query.filter_by(cliente_id=cliente.id, estado='cerrada', reserva_id=reserva3.id, tipo='curso').first()
+    if not conversacion2:
+        conversacion2 = Conversacion(cliente_id=cliente.id, estado='cerrada', reserva_id=reserva3.id, tipo='curso')
+        db.session.add(conversacion2)
+    msj_3 = MensajeChat.query.filter_by(user=cliente.nombre, rol=cliente.tipo, conversacion=conversacion2, msg='Hola, me gustaria contactarme con Alquilando').first()
+    if not msj_3:
+        msj_3 = MensajeChat(user=cliente.nombre, rol=cliente.tipo, conversacion=conversacion2, msg='Hola, me gustaria contactarme con Alquilando')
+        db.session.add(msj_3)
+    msj_4 = MensajeChat.query.filter_by(user=superuser.nombre, rol=superuser.tipo, conversacion_id=conversacion2.id, msg='Gracias por contactarnos, en un momento estamos con usted.').first()
+    if not msj_4:
+        msj_4 = MensajeChat(user=superuser.nombre, rol=superuser.tipo, conversacion=conversacion2, msg='Gracias por contactarnos, en un momento estamos con usted.')
+        db.session.add(msj_4)
+    msj_8 = MensajeChat.query.filter_by(user=superuser.nombre, rol=superuser.tipo, conversacion_id=conversacion2.id, msg='Hola Juan, ¿en qué puedo ayudarte?').first()
+    if not msj_8:
+        msj_8 = MensajeChat(user=superuser.nombre, rol=superuser.tipo, conversacion=conversacion2, msg='Hola Juan, ¿en qué puedo ayudarte?')
+        db.session.add(msj_8)
+    msj_9 = MensajeChat.query.filter_by(user=cliente.nombre, rol=cliente.tipo, conversacion_id=conversacion2.id, msg='Hola, no encuentro las termicas. Donde estan?').first()
+    if not msj_9:
+        msj_9 = MensajeChat(user=cliente.nombre, rol=cliente.tipo, conversacion=conversacion2, msg='Hola, no encuentro las termicas. Donde estan?')
+        db.session.add(msj_9)
+    msj_10 = MensajeChat.query.filter_by(user=superuser.nombre, rol=superuser.tipo, conversacion_id=conversacion2.id, msg='Las térmicas están en el pasillo, al lado de la cocina.').first()
+    if not msj_10:
+        msj_10 = MensajeChat(user=superuser.nombre, rol=superuser.tipo, conversacion=conversacion2, msg='Las térmicas están en el pasillo, al lado de la cocina.')
+        db.session.add(msj_10)
+        
+
+        
+    conversacion3 = Conversacion.query.filter_by(cliente_id=cliente.id, estado='cerrada', reserva_id=reserva10.id, tipo='futuro').first()
+    if not conversacion3:
+        conversacion3 = Conversacion(cliente_id=cliente.id, estado='cerrada', reserva_id=reserva10.id, tipo='futuro')
+        db.session.add(conversacion3)
+    
+    msj_11 = MensajeChat.query.filter_by(user=cliente.nombre, rol=cliente.tipo, conversacion=conversacion3, msg='Hola, me gustaria contactarme con Alquilando').first()
+    if not msj_11:
+        msj_11 = MensajeChat(user=cliente.nombre, rol=cliente.tipo, conversacion=conversacion3, msg='Hola, me gustaria contactarme con Alquilando')
+        db.session.add(msj_11)
+    msj_12 = MensajeChat.query.filter_by(user=superuser.nombre, rol=superuser.tipo, conversacion_id=conversacion3.id, msg='Gracias por contactarnos, en un momento estamos con usted.').first()
+    if not msj_12:
+        msj_12 = MensajeChat(user=superuser.nombre, rol=superuser.tipo, conversacion=conversacion3, msg='Gracias por contactarnos, en un momento estamos con usted.')
+        db.session.add(msj_12)
+    msj_13 = MensajeChat.query.filter_by(user=cliente.nombre, rol=cliente.tipo, conversacion_id=conversacion3.id, msg='Hola si, sabe el pronostico?').first()
+    if not msj_13:
+        msj_13 = MensajeChat(user=cliente.nombre, rol=cliente.tipo, conversacion=conversacion3, msg='Hola si, sabe el pronostico?')
+        db.session.add(msj_13)
+    msj_14 = MensajeChat.query.filter_by(user=superuser.nombre, rol=superuser.tipo, conversacion_id=conversacion3.id, msg='Honestamente no').first()
+    if not msj_14:
+        msj_14 = MensajeChat(user=superuser.nombre, rol=superuser.tipo, conversacion=conversacion3, msg='Honestamente no')
+        db.session.add(msj_14)
+        
+    conversacion4 = Conversacion.query.filter_by(cliente_id=cliente.id, estado='cerrada', reserva_id=reserva10.id, tipo='curso').first()
+    if not conversacion4:
+        conversacion4 = Conversacion(cliente_id=cliente.id, estado='cerrada', reserva_id=reserva10.id, tipo='curso')
+        db.session.add(conversacion4)
+    msj_15 = MensajeChat.query.filter_by(user=cliente.nombre, rol=cliente.tipo, conversacion=conversacion4, msg='Hola, me gustaria contactarme con Alquilando').first()
+    if not msj_15:
+        msj_15 = MensajeChat(user=cliente.nombre, rol=cliente.tipo, conversacion=conversacion4, msg='Hola, me gustaria contactarme con Alquilando')
+        db.session.add(msj_15)
+    msj_16 = MensajeChat.query.filter_by(user=superuser.nombre, rol=superuser.tipo, conversacion_id=conversacion4.id, msg='Gracias por contactarnos, en un momento estamos con usted.').first()
+    if not msj_16:
+        msj_16 = MensajeChat(user=superuser.nombre, rol=superuser.tipo, conversacion=conversacion4, msg='Gracias por contactarnos, en un momento estamos con usted.')
+        db.session.add(msj_16)
+    msj_17 = MensajeChat.query.filter_by(user=cliente.nombre, rol=cliente.tipo, conversacion_id=conversacion4.id, msg='No encuentro las ollas').first()
+    if not msj_17:
+        msj_17 = MensajeChat(user=cliente.nombre, rol=cliente.tipo, conversacion=conversacion4, msg='No encuentro las ollas')
+        db.session.add(msj_17)
+    msj_18 = MensajeChat.query.filter_by(user=superuser.nombre, rol=superuser.tipo, conversacion_id=conversacion4.id, msg='Las ollas están en el mueble de la cocina, al lado del horno.').first()
+    if not msj_18:
+        msj_18 = MensajeChat(user=superuser.nombre, rol=superuser.tipo, conversacion=conversacion4, msg='Las ollas están en el mueble de la cocina, al lado del horno.')
+        db.session.add(msj_18)
+    db.session.commit()
+
+    # Favoritos
+    if prop1 not in cliente.favoritos:
+        cliente.favoritos.append(prop1)
+    db.session.commit()
+
+    # Imagenes
+    img1 = Imagen.query.filter_by(carpeta='/static/img/prop1', propiedad=prop1).first()
+    if not img1:
+        img1 = Imagen(carpeta='/static/img/prop1', propiedad=prop1)
+        db.session.add(img1)
+        prop1.imagenes.append(img1)
+
+    img2 = Imagen.query.filter_by(carpeta='/static/img/prop2', propiedad=prop2).first()
+    if not img2:
+        img2 = Imagen(carpeta='/static/img/prop2', propiedad=prop2)
+        db.session.add(img2)
+        prop2.imagenes.append(img2)
+
+    img3 = Imagen.query.filter_by(carpeta='/static/img/prop3', propiedad=prop3).first()
+    if not img3:
+        img3 = Imagen(carpeta='/static/img/prop3', propiedad=prop3)
+        db.session.add(img3)
+        prop3.imagenes.append(img3)
+
+    img4 = Imagen.query.filter_by(carpeta='/static/img/prop4', propiedad=prop4).first()
+    if not img4:
+        img4 = Imagen(carpeta='/static/img/prop4', propiedad=prop4)
+        db.session.add(img4)
+        prop4.imagenes.append(img4)
+
+    img5 = Imagen.query.filter_by(carpeta='/static/img/prop5', propiedad=prop5).first()
+    if not img5:
+        img5 = Imagen(carpeta='/static/img/prop5', propiedad=prop5)
+        db.session.add(img5)
+        prop5.imagenes.append(img5)
+
+    img6 = Imagen.query.filter_by(carpeta='/static/img/prop6', propiedad=prop6).first()
+    if not img6:
+        img6 = Imagen(carpeta='/static/img/prop6', propiedad=prop6)
+        db.session.add(img6)
+        prop6.imagenes.append(img6)
+
+    img7 = Imagen.query.filter_by(carpeta='/static/img/prop7', propiedad=prop7).first()
+    if not img7:
+        img7 = Imagen(carpeta='/static/img/prop7', propiedad=prop7)
+        db.session.add(img7)
+        prop7.imagenes.append(img7)
+
+    img8 = Imagen.query.filter_by(carpeta='/static/img/prop8', propiedad=prop8).first()
+    if not img8:
+        img8 = Imagen(carpeta='/static/img/prop8', propiedad=prop8)
+        db.session.add(img8)
+        prop8.imagenes.append(img8)
+
+    img9 = Imagen.query.filter_by(carpeta='/static/img/prop9', propiedad=prop9).first()
+    if not img9:
+        img9 = Imagen(carpeta='/static/img/prop9', propiedad=prop9)
+        db.session.add(img9)
+        prop9.imagenes.append(img9)
+
+    img10 = Imagen.query.filter_by(carpeta='/static/img/prop10', propiedad=prop10).first()
+    if not img10:
+        img10 = Imagen(carpeta='/static/img/prop10', propiedad=prop10)
+        db.session.add(img10)
+        prop10.imagenes.append(img10)
+    
+    db.session.commit() 
+
+    # Reservas de Juan López para pruebas de reglas de negocio
+    # 1. Reembolsable, 100%, más de 48h (debe mostrar reembolso)
+    fecha_inicio_j1 = (datetime.now() + timedelta(days=10)).date()
+    fecha_fin_j1 = fecha_inicio_j1 + timedelta(days=5)
+    reserva_j1 = Reserva.query.filter_by(cliente_id=cliente.id, propiedad_id=prop3.id, fecha_inicio=fecha_inicio_j1, fecha_fin=fecha_fin_j1).first()
+    if not reserva_j1:
+        reserva_j1 = Reserva(cliente=cliente, propiedad=prop3, fecha_inicio=fecha_inicio_j1, fecha_fin=fecha_fin_j1, cantidad_personas=2, estado='futura')
+        db.session.add(reserva_j1)
+    # 2. Reembolsable, 20%, más de 48h (no reembolso)
+    fecha_inicio_j2 = (datetime.now() + timedelta(days=15)).date()
+    fecha_fin_j2 = fecha_inicio_j2 + timedelta(days=3)
+    reserva_j2 = Reserva.query.filter_by(cliente_id=cliente.id, propiedad_id=prop1.id, fecha_inicio=fecha_inicio_j2, fecha_fin=fecha_fin_j2).first()
+    if not reserva_j2:
+        reserva_j2 = Reserva(cliente=cliente, propiedad=prop1, fecha_inicio=fecha_inicio_j2, fecha_fin=fecha_fin_j2, cantidad_personas=2, estado='futura')
+        db.session.add(reserva_j2)
+    # 3. Reembolsable, 100%, menos de 48h (no reembolso)
+    fecha_inicio_j3 = (datetime.now() + timedelta(days=1)).date()
+    fecha_fin_j3 = fecha_inicio_j3 + timedelta(days=2)
+    reserva_j3 = Reserva.query.filter_by(cliente_id=cliente.id, propiedad_id=prop9.id, fecha_inicio=fecha_inicio_j3, fecha_fin=fecha_fin_j3).first()
+    if not reserva_j3:
+        reserva_j3 = Reserva(cliente=cliente, propiedad=prop9, fecha_inicio=fecha_inicio_j3, fecha_fin=fecha_fin_j3, cantidad_personas=2, estado='futura')
+        db.session.add(reserva_j3)
+    # 4. No reembolsable, 100%, más de 48h (no reembolso)
+    fecha_inicio_j4 = (datetime.now() + timedelta(days=12)).date()
+    fecha_fin_j4 = fecha_inicio_j4 + timedelta(days=4)
+    reserva_j4 = Reserva.query.filter_by(cliente_id=cliente.id, propiedad_id=prop6.id, fecha_inicio=fecha_inicio_j4, fecha_fin=fecha_fin_j4).first()
+    if not reserva_j4:
+        reserva_j4 = Reserva(cliente=cliente, propiedad=prop6, fecha_inicio=fecha_inicio_j4, fecha_fin=fecha_fin_j4, cantidad_personas=2, estado='futura')
+        db.session.add(reserva_j4)
+    # 5. No reembolsable, 20%, más de 48h (no reembolso)
+    fecha_inicio_j5 = (datetime.now() + timedelta(days=20)).date()
+    fecha_fin_j5 = fecha_inicio_j5 + timedelta(days=2)
+    reserva_j5 = Reserva.query.filter_by(cliente_id=cliente.id, propiedad_id=prop4.id, fecha_inicio=fecha_inicio_j5, fecha_fin=fecha_fin_j5).first()
+    if not reserva_j5:
+        reserva_j5 = Reserva(cliente=cliente, propiedad=prop4, fecha_inicio=fecha_inicio_j5, fecha_fin=fecha_fin_j5, cantidad_personas=2, estado='futura')
+        db.session.add(reserva_j5)
+    db.session.commit() 

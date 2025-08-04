@@ -1,0 +1,10 @@
+{% macro search_filter(form_action) %}
+<div class="row mb-3">
+    <div class="col-md-8 mx-auto">
+        <form action="{{ form_action }}" method="get" class="d-flex gap-2">
+            <input type="text" class="form-control" name="ubicacion" placeholder="Buscar por ubicación" value="{{ request.args.get('ubicacion', '') }}">
+            <button type="submit" class="btn btn-primary">Buscar</button>
+        </form>
+    </div>
+</div>
+{% endmacro %} 

@@ -1,0 +1,318 @@
+{% extends "base_hero.html" %}
+
+{% block title %}Resultados de búsqueda{% endblock %}
+
+{% block hero_content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+<style>
+.fade-in-card {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.fade-in-card.visible {
+  opacity: 1;
+  transform: none;
+}
+</style>
+<div class="container d-flex flex-column flex-grow-1" style="min-height:60vh;">
+    {% if ubicacion_no_encontrada %}
+        <form method="get" class="mb-4">
+            <div class="row align-items-center mb-3" style="margin-top:1.5rem;">
+                <div class="col-md-6 d-flex align-items-center mt-3">
+                    <label for="ubicacion" class="form-label mb-0 me-2"><i class="bi bi-geo-alt-fill"></i></label>
+                    <input class="form-control" type="search" name="ubicacion" id="ubicacion" placeholder="Ubicación" aria-label="Ubicación" value="{{ ubicacion }}">
+                </div>
+                <div class="col-md-2 d-flex align-items-center mt-3">
+                    <button type="submit" class="btn btn-primary w-100" id="btn-buscar"><i class="bi bi-search me-2"></i>Buscar</button>
+                </div>
+            </div>
+        </form>
+        <!-- Solo se muestra el mensaje flash (fondo rojo), no el alert amarillo -->
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            var btnBuscar = document.getElementById('btn-buscar');
+            var ubicacionInput = document.getElementById('ubicacion');
+            btnBuscar.disabled = false;
+            ubicacionInput.addEventListener('input', function() {
+              btnBuscar.disabled = ubicacionInput.value.trim() === '';
+            });
+          });
+        </script>
+    {% else %}
+    <form method="get" class="mb-4">
+        <div class="row align-items-center mb-3" style="margin-top:1.5rem;">
+            <div class="col-md-6 d-flex align-items-center mt-3">
+                <label for="ubicacion" class="form-label mb-0 me-2"><i class="bi bi-geo-alt-fill"></i></label>
+                <input class="form-control" type="search" name="ubicacion" id="ubicacion" placeholder="Ubicación" aria-label="Ubicación" value="{{ ubicacion }}">
+            </div>
+            <div class="col-md-2 d-flex align-items-center mt-3">
+                <button type="submit" class="btn btn-primary w-100" id="btn-buscar" disabled><i class="bi bi-search me-2"></i>Buscar</button>
+            </div>
+        </div>
+        <!-- Rango de fechas movido debajo de ubicación -->
+        <div class="row align-items-center mb-3" style="margin-top:1.0rem;">
+            <div class="col-md-2 d-flex align-items-center mt-2">
+                <label for="fecha_inicio" class="form-label mb-0 me-2"><i class="bi bi-calendar-event"></i> Desde</label>
+                <input type="date" class="form-control" id="fecha_inicio" name="fecha_inicio" value="{{ fecha_inicio or '' }}">
+            </div>
+            <div class="col-md-2 d-flex align-items-center mt-2 offset-md-1">
+                <label for="fecha_fin" class="form-label mb-0 me-2"><i class="bi bi-calendar-event"></i> Hasta</label>
+                <input type="date" class="form-control" id="fecha_fin" name="fecha_fin" value="{{ fecha_fin or '' }}" disabled>
+            </div>
+        </div>
+        <div class="row align-items-center mb-3" style="margin-top: -10.5rem;">
+            <div class="col-md-4 offset-md-8 d-flex" style="margin-top:2.5rem;">
+                <div class="bg-white rounded shadow-sm p-3 border" style="min-width:300px; width:100%;">
+                    <label class="form-label mb-2">Características</label>
+                    <div class="d-flex flex-column gap-1">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="caracteristicas" value="wifi" id="wifi" {% if 'wifi' in caracteristicas %}checked{% endif %}>
+                            <label class="form-check-label" for="wifi"><i class="bi bi-wifi"></i> WiFi</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="caracteristicas" value="pileta" id="pileta" {% if 'pileta' in caracteristicas %}checked{% endif %}>
+                            <label class="form-check-label" for="pileta"><i class="bi bi-water"></i> Pileta</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="caracteristicas" value="cochera" id="cochera" {% if 'cochera' in caracteristicas %}checked{% endif %}>
+                            <label class="form-check-label" for="cochera"><i class="bi bi-car-front"></i> Cochera</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="caracteristicas" value="mascotas" id="mascotas" {% if 'mascotas' in caracteristicas %}checked{% endif %}>
+                            <label class="form-check-label" for="mascotas"><i class="fa-solid fa-cat"></i> Apto mascotas</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="caracteristicas" value="patio" id="patio" {% if 'patio' in caracteristicas %}checked{% endif %}>
+                            <label class="form-check-label" for="patio"><i class="bi bi-tree"></i> Patio trasero</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row align-items-center mb-3" style="margin-top:-4.5rem;">
+            <div class="col-md-2 d-flex align-items-center mt-2">
+                <label for="precio_min" class="form-label mb-0 me-2"><i class="bi bi-currency-dollar"></i></label>
+                <input type="number" class="form-control" id="precio_min" name="precio_min" min="0" step="1" value="{{ precio_min or '' }}" placeholder="Precio mín noche" inputmode="numeric" pattern="[0-9]*" onkeydown="return event.key >= '0' && event.key <= '9' || event.key === 'Backspace' || event.key === 'Tab' || event.key === 'ArrowLeft' || event.key === 'ArrowRight';">
+            </div>
+            <div class="col-md-2 d-flex align-items-center mt-2">
+                <label for="precio_max" class="form-label mb-0 me-2"><i class="bi bi-currency-dollar"></i></label>
+                <input type="number" class="form-control" id="precio_max" name="precio_max" min="0" step="1" value="{{ precio_max or '' }}" placeholder="Precio máx noche" inputmode="numeric" pattern="[0-9]*" onkeydown="return event.key >= '0' && event.key <= '9' || event.key === 'Backspace' || event.key === 'Tab' || event.key === 'ArrowLeft' || event.key === 'ArrowRight';">
+            </div>
+            <div class="col-md-2 d-flex align-items-center mt-2">
+                <label for="orden_precio" class="form-label mb-0 me-2">Ordenar <span style="font-size:1.2em;"></span></label>
+                <select class="form-select" id="orden_precio" name="orden_precio" style="min-width: 320px; width: 100%; max-width: 400px;">
+                    <option value="" {% if not orden_precio %}selected{% endif %}>---</option>
+                    <option value="asc" {% if orden_precio == 'asc' %}selected{% endif %}>Precio - Menor a Mayor</option>
+                    <option value="desc" {% if orden_precio == 'desc' %}selected{% endif %}>Precio - Mayor a Menor</option>
+                    <option value="calif_asc" {% if orden_precio == 'calif_asc' %}selected{% endif %}>Calificación - Menor a Mayor</option>
+                    <option value="calif_desc" {% if orden_precio == 'calif_desc' %}selected{% endif %}>Calificación - Mayor a Menor</option>
+                </select>
+            </div>
+        </div>
+    </form>
+    {% if propiedades %}
+        <div class="row">
+            {% for propiedad in propiedades %}
+                <div class="col-md-4 mb-3 fade-in-card">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <a href="{{ url_for('main.detalle_propiedad', id=propiedad.id) }}" class="text-decoration-none text-primary">
+                                    {{ propiedad.nombre }}
+                                </a>
+                            </h5>
+                            <p class="card-text">Ubicación: {{ propiedad.ubicacion }}</p>
+                            <p class="card-text">Precio por noche: ${{ propiedad.precio }}</p>
+                            <p class="card-text">Límite de personas: {{ propiedad.limite_personas }}</p>
+                            <div class="mb-2">
+                                {% if propiedad.wifi %}<i class="bi bi-wifi" title="WiFi"></i> {% endif %}
+                                {% if propiedad.piscina %}<i class="bi bi-water" title="Pileta"></i> {% endif %}
+                                {% if propiedad.cochera %}<i class="bi bi-car-front" title="Cochera"></i> {% endif %}
+                                {% if propiedad.pet_friendly %}<i class="fa-solid fa-cat" title="Apto mascotas"></i> {% endif %}
+                                {% if propiedad.patio_trasero %}<i class="bi bi-tree" title="Patio trasero"></i> {% endif %}
+                            </div>
+                            <p class="card-text mb-1">
+                                {% set promedio = propiedad.promedio_calificacion %}
+                                {% if promedio is not none %}
+                                    <span title="{{ promedio|round(2) }} de 5">
+                                        {% set full_stars = promedio|int %}
+                                        {% set half_star = 1 if promedio - full_stars >= 0.25 and promedio - full_stars < 0.75 else 0 %}
+                                        {% set empty_stars = 5 - full_stars - half_star %}
+                                        {% for _ in range(full_stars) %}
+                                            <i class="fa-solid fa-star" style="color: #222;"></i>
+                                        {% endfor %}
+                                        {% if half_star %}
+                                            <i class="fa-solid fa-star-half-stroke" style="color: #222;"></i>
+                                        {% endif %}
+                                        {% for _ in range(empty_stars) %}
+                                            <i class="fa-regular fa-star" style="color: #222;"></i>
+                                        {% endfor %}
+                                    </span>
+                                {% endif %}
+                            </p>
+                            {% set imagenes = [] %}
+                            {% for imagen in propiedad.imagenes %}
+                                {% set archivos = get_archivos_carpeta(imagen.carpeta) %}
+                                {% for archivo in archivos %}
+                                    {% set _ = imagenes.append(imagen.carpeta ~ '/' ~ archivo) %}
+                                {% endfor %}
+                            {% endfor %}
+                            <div class="mb-2" style="height:220px; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+                                {% if imagenes and imagenes|length > 0 %}
+                                    <img src="{{ imagenes[0] }}" alt="Imagen de {{ propiedad.nombre }}" 
+                                         style="height:100%; width:100%; object-fit:cover; object-position:center;" 
+                                         class="img-fluid rounded" loading="lazy" />
+                                {% else %}
+                                    <div class="d-flex justify-content-center align-items-center bg-light rounded" style="height:100%; width:100%;">
+                                        <i class="bi bi-house-door" style="font-size:3rem; color:#bbb;"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        
+                      
+                            <div class="d-grid gap-2 mt-2">
+                                <a href="{{ url_for('main.detalle_propiedad', id=propiedad.id) }}" class="btn btn-outline-primary btn-sm">Ver detalle</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Controles de paginación -->
+        <nav aria-label="Paginación de resultados">
+          <ul class="pagination justify-content-center">
+            {# Botón Anterior #}
+            <li class="page-item {% if pagina <= 1 %}disabled{% endif %}">
+              <a class="page-link" href="?{% for key, value in request.args.items() if key != 'pagina' %}{{ key }}={{ value|urlencode }}&{% endfor %}pagina={{ pagina-1 }}" tabindex="-1">Anterior</a>
+            </li>
+            {# Números de página #}
+            {% for p in range(1, total_paginas+1) %}
+              <li class="page-item {% if p == pagina %}active{% endif %}">
+                <a class="page-link" href="?{% for key, value in request.args.items() if key != 'pagina' %}{{ key }}={{ value|urlencode }}&{% endfor %}pagina={{ p }}">{{ p }}</a>
+              </li>
+            {% endfor %}
+            {# Botón Siguiente #}
+            <li class="page-item {% if pagina >= total_paginas %}disabled{% endif %}">
+              <a class="page-link" href="?{% for key, value in request.args.items() if key != 'pagina' %}{{ key }}={{ value|urlencode }}&{% endfor %}pagina={{ pagina+1 }}">Siguiente</a>
+            </li>
+          </ul>
+        </nav>
+    {% endif %}
+    {% endif %}
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Definir variables de inputs
+  var precioMinInput = document.getElementById('precio_min');
+  var precioMaxInput = document.getElementById('precio_max');
+  var ubicacionInput = document.getElementById('ubicacion');
+  var btnBuscar = document.getElementById('btn-buscar');
+
+  function toggleBuscarBtn() {
+    btnBuscar.disabled = ubicacionInput.value.trim() === '' ||
+      (precioMinInput.value !== '' && precioMaxInput.value !== '' && parseInt(precioMaxInput.value) < parseInt(precioMinInput.value));
+  }
+
+  function updatePrecioMaxMin() {
+    if (precioMinInput.value !== '') {
+      precioMaxInput.min = parseInt(precioMinInput.value);
+      if (precioMaxInput.value !== '' && parseInt(precioMaxInput.value) < parseInt(precioMinInput.value)) {
+        precioMaxInput.value = '';
+      }
+    } else {
+      precioMaxInput.min = 0;
+    }
+    toggleBuscarBtn();
+  }
+
+  ubicacionInput.addEventListener('input', toggleBuscarBtn);
+  precioMinInput.addEventListener('input', updatePrecioMaxMin);
+  precioMaxInput.addEventListener('input', toggleBuscarBtn);
+  toggleBuscarBtn();
+
+  // Validación de fechas
+  function setFechaFinMin() {
+    var fechaInicioInput = document.getElementById('fecha_inicio');
+    var fechaFinInput = document.getElementById('fecha_fin');
+    // Establecer min de fecha de inicio a hoy
+    var today = new Date();
+    var todayStr = today.toISOString().split('T')[0];
+    fechaInicioInput.min = todayStr;
+    // Lógica existente para fecha fin
+    var fechaInicio = fechaInicioInput.value;
+    if (fechaInicio) {
+      var minDate = new Date(fechaInicio);
+      minDate.setDate(minDate.getDate() + 1);
+      var minDateStr = minDate.toISOString().split('T')[0];
+      fechaFinInput.min = minDateStr;
+      if (fechaFinInput.value && fechaFinInput.value <= fechaInicio) {
+        fechaFinInput.value = '';
+      }
+    } else {
+      fechaFinInput.min = '';
+    }
+  }
+  document.getElementById('fecha_inicio').addEventListener('input', setFechaFinMin);
+  setFechaFinMin();
+
+  // Validación al enviar el formulario
+  document.querySelector('form').addEventListener('submit', function(e) {
+    var fechaInicio = document.getElementById('fecha_inicio').value;
+    var fechaFin = document.getElementById('fecha_fin').value;
+    if (fechaInicio && fechaFin && fechaFin <= fechaInicio) {
+      alert('La fecha de fin debe ser mayor a la fecha de inicio.');
+      e.preventDefault();
+    }
+    if (precioMinInput.value !== '' && precioMaxInput.value !== '' && parseInt(precioMaxInput.value) < parseInt(precioMinInput.value)) {
+      precioMaxInput.value = '';
+      precioMaxInput.focus();
+      e.preventDefault();
+    }
+  });
+
+  var fechaInputs = [document.getElementById('fecha_inicio'), document.getElementById('fecha_fin')];
+  fechaInputs.forEach(input => {
+    input.addEventListener('keydown', function(e) {
+      e.preventDefault();
+    });
+    input.addEventListener('paste', function(e) {
+      e.preventDefault();
+    });
+  });
+
+  // Habilitar/deshabilitar fecha_fin según fecha_inicio
+  var fechaInicioInput = document.getElementById('fecha_inicio');
+  var fechaFinInput = document.getElementById('fecha_fin');
+  function toggleFechaFin() {
+    fechaFinInput.disabled = !fechaInicioInput.value;
+  }
+  fechaInicioInput.addEventListener('input', toggleFechaFin);
+  toggleFechaFin();
+
+  const cards = document.querySelectorAll('.fade-in-card');
+  cards.forEach((card, i) => {
+    setTimeout(() => {
+      card.classList.add('visible');
+    }, 80 * i);
+  });
+
+  // Cargar Leaflet CSS y JS de forma asíncrona después de renderizar la página
+  function loadLeaflet() {
+    // CSS
+    var leafletCss = document.createElement('link');
+    leafletCss.rel = 'stylesheet';
+    leafletCss.href = 'https://unpkg.com/leaflet/dist/leaflet.css';
+    document.head.appendChild(leafletCss);
+    // JS
+    var leafletJs = document.createElement('script');
+    leafletJs.src = 'https://unpkg.com/leaflet/dist/leaflet.js';
+    leafletJs.async = true;
+    document.body.appendChild(leafletJs);
+  }
+  setTimeout(loadLeaflet, 0); // Ejecuta justo después de renderizar
+});
+</script>
+{% endblock %}

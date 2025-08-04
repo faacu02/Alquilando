@@ -1,0 +1,100 @@
+{% extends "base_hero.html" %}
+{% from "components/country_select.html" import country_select %}
+
+{% block title %}Agregar Empleado{% endblock %}
+
+{% block hero_content %}
+<div class="d-flex flex-column align-items-center justify-content-center" style="min-height: auto;">
+  <div class="card p-4 shadow text-start" style="max-width: 600px; width: 100%;">
+    <h2 class="text-center text-secondary mb-4">Agregar nuevo empleado</h2>
+    <form method="post">
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label for="nombre" class="form-label">Nombre</label>
+          <input type="text" class="form-control" id="nombre" name="nombre" required value="{{ data.nombre if data is defined else '' }}">
+        </div>
+        <div class="col-md-6 mb-3">
+          <label for="apellido" class="form-label">Apellido</label>
+          <input type="text" class="form-control" id="apellido" name="apellido" required value="{{ data.apellido if data is defined else '' }}">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label for="dni" class="form-label text-secondary">DNI/cedula de identificación/Pasaporte/Otro *</label>
+          <input type="text" class="form-control" id="dni" name="dni" required value="{{ data.dni if data is defined else '' }}">
+        </div>
+        <div class="col-md-6 mb-3">
+          <label for="telefono" class="form-label">Teléfono</label>
+          <input type="text" class="form-control" id="telefono" name="telefono" required value="{{ data.telefono if data is defined else '' }}">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label for="nacionalidad" class="form-label">Nacionalidad</label>
+          {{ country_select('nacionalidad', data.nacionalidad if data is defined else '') }}
+        </div>
+        <div class="col-md-6 mb-3">
+          <label for="email" class="form-label">Email</label>
+          <input type="email" class="form-control" id="email" name="email" required value="{{ data.email if data is defined else '' }}">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label for="contrasena" class="form-label">Contraseña</label>
+          <input type="password" class="form-control" id="contrasena" name="contrasena" required value="{{ data.contrasena if data is defined else '' }}">
+        </div>
+        <div class="col-md-6 mb-3">
+          {% if user_rol == 'superusuario' %}
+            <label for="rol" class="form-label">Rol</label>
+            <select class="form-select" id="rol" name="rol" required>
+              <option value="" disabled {% if data is not defined or not data.rol %}selected{% endif %}>Selecciona un rol</option>
+              {% for rol in roles %}
+                <option value="{{ rol }}" {% if data is defined and data.rol == rol %}selected{% endif %}>{{ rol }}</option>
+              {% endfor %}
+            </select>
+          {% else %}
+            <input type="hidden" name="rol" id="rol" value="Encargado">
+            <label class="form-label">Rol</label>
+            <input type="text" class="form-control" value="Encargado" disabled>
+          {% endif %}
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12 mb-3 d-flex align-items-end">
+          <button type="submit" class="btn btn-primary w-100" id="btn-guardar" disabled>Guardar</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Lista de campos requeridos en agregar_empleado
+    const campos = [
+        'nombre', 'apellido', 'dni', 'telefono', 'nacionalidad', 'email', 'contrasena', 'rol'
+    ];
+    const btnGuardar = document.getElementById('btn-guardar');
+
+    function verificarCampos() {
+        let todosConValor = campos.every(id => {
+            const el = document.getElementById(id);
+            // Para el select de nacionalidad y rol, también chequea si existe y tiene valor
+            return el && el.value.trim() !== '';
+        });
+        btnGuardar.disabled = !todosConValor;
+    }
+
+    campos.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', verificarCampos);
+            el.addEventListener('change', verificarCampos);
+        }
+    });
+
+    // Llamar al cargar la página por si hay valores precargados
+    verificarCampos();
+});
+</script>
+{% endblock %} 

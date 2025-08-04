@@ -1,0 +1,65 @@
+{% extends "base_hero.html" %}
+{% from "components/loading_spinner.html" import loading_spinner %}
+
+{% block title %}Iniciar sesión - Alquilando{% endblock %}
+
+{% block hero_content %}
+<div class="d-flex flex-column align-items-center justify-content-center py-5" style="z-index: 2;">
+  <div class="card p-4 shadow text-start" style="max-width: 400px; width: 100%; background-color: white;">
+    <h2 class="text-center text-secondary mb-4">¡Hola, de nuevo!</h2>
+
+    {% if login_success and redirect_url %}
+      {{ loading_spinner() }}
+      <script>
+        setTimeout(function() {
+          window.location.href = "{{ redirect_url }}";
+        }, 1000);
+      </script>
+    {% else %}
+      <form method="post">
+        <div class="mb-3">
+          <label for="email" class="form-label text-secondary">Email</label>
+          <input type="email" class="form-control" id="email" name="email" placeholder="ejemplo@correo.com" required>
+        </div>
+
+        <div class="mb-3">
+          <label for="password" class="form-label text-secondary">Contraseña</label>
+          <input type="password" class="form-control" id="password" name="password" placeholder="********" required>
+        </div>
+
+        <div class="d-grid mb-3">
+          <button type="submit" class="btn btn-primary" id="btn-login" disabled>Iniciar sesión</button>
+        </div>
+
+        <div class="text-end">
+          <a href="{{ url_for('main.recuperar_contraseña') }}" class="text-decoration-none text-secondary small">Recuperar contraseña</a>
+        </div>
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const campos = ['email', 'password'];
+    const btnLogin = document.getElementById('btn-login');
+
+    function verificarCampos() {
+        let todosConValor = campos.every(id => {
+            const el = document.getElementById(id);
+            return el && el.value.trim() !== '';
+        });
+        btnLogin.disabled = !todosConValor;
+    }
+
+    campos.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', verificarCampos);
+        }
+    });
+
+    verificarCampos();
+});
+</script>
+{% endblock %}
